@@ -7,9 +7,12 @@
   <license>GPLv2+</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/lua_utils</url>
+  <export>
+    <cpp cflags="-I${prefix}/include -DUSE_ROS `pkg-config --cflags lua5.1`" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -llua_utils"/>
+  </export>
   <depend package="roscpp"/>
   <depend package="roslib"/>
   <rosdep name="lua"/>
+  <rosdep name="tolua++"/>
 </package>
-
 

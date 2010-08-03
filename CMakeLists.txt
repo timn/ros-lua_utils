@@ -21,7 +21,7 @@ add_definitions(-DUSE_ROS)
 pkg_check_modules(LUA REQUIRED lua5.1)
 
 include_directories(${LUA_INCLUDE_DIRS})
-link_libraries(${LUA_LIBRARIES})
+link_libraries(${LUA_LIBRARIES} tolua++5.1)
 
 #uncomment if you have defined messages
 #rosbuild_genmsg()
