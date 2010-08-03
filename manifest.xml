@@ -1,0 +1,15 @@
+<package>
+  <description brief="lua_utils">
+   This package provides utility classes to integrate Lua into a C++ program.
+   The code is copied from Fawkes (http://www.fawkesrobotics.org).
+  </description>
+  <author>Tim Niemueller</author>
+  <license>GPLv2+</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/lua_utils</url>
+  <depend package="roscpp"/>
+  <depend package="roslib"/>
+  <rosdep name="lua"/>
+</package>
+
+
