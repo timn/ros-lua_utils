@@ -179,6 +179,11 @@ LuaContext::init_state()
     lua_setglobal(L, __integers_it->first.c_str());
   }
 
+  for ( __cfunctions_it = __cfunctions.begin(); __cfunctions_it != __cfunctions.end(); ++__cfunctions_it) {
+    lua_pushcfunction(L, __cfunctions_it->second);
+    lua_setglobal(L, __cfunctions_it->first.c_str());
+  }
+
 #ifndef USE_ROS
   LuaContext *tmpctx = new LuaContext(L);
   MutexLocker(__watchers.mutex());
@@ -318,6 +323,31 @@ LuaContext::add_package(const char *package)
 
     __packages.push_back(package);
   }
+}
+
+/** Add a directory to watch for changes.
+ * Files with a .lua suffix will be considered as Lua modules.
+ * @param path path to add
+ */
+void
+LuaContext::add_watchdir(const char *path)
+{
+#ifndef USE_ROS
+  MutexLocker lock(__lua_mutex);
+#endif
+  if ( __fam )  __fam->watch_dir(path);
+}
+
+/** Add a file to watch for changes.
+ * @param path path to add
+ */
+void
+LuaContext::add_watchfile(const char *path)
+{
+#ifndef USE_ROS
+  MutexLocker lock(__lua_mutex);
+#endif
+  if ( __fam )  __fam->watch_file(path);
 }
 
 
@@ -611,6 +641,13 @@ LuaContext::assert_unique_name(const char *name, std::string type)
     throw Exception(std::string("Integer entry already exists for name ") + name);
 #endif
   }
+  if ( (type != "cfunction") && (__cfunctions.find(name) != __cfunctions.end()) ) {
+#ifndef USE_ROS
+    throw Exception("Cfunction entry already exists for name %s", name);
+#else
+    throw Exception(std::string("Cfunction entry already exists for name ") + name);
+#endif
+  }
 }
 
 
@@ -713,6 +750,24 @@ LuaContext::set_integer(const char *name, lua_Integer value)
   __integers[name] = value;
 
   lua_pushinteger(__L, value);
+  lua_setglobal(__L, name);
+}
+
+/** Assign C function to global variable.
+ * @param name name of global variable to assign the value to
+ * @param function function to assign
+ */
+void
+LuaContext::set_cfunction(const char *name, lua_CFunction function)
+{
+#ifndef USE_ROS
+  MutexLocker lock(__lua_mutex);
+#endif
+  assert_unique_name(name, "cfunction");
+
+  __cfunctions[name] = function;
+
+  lua_pushcfunction(__L, function);
   lua_setglobal(__L, name);
 }
 
@@ -884,6 +939,18 @@ LuaContext::push_usertype(void *data, const char *type_name,
   }
 
   tolua_pushusertype(__L, data, type_n.c_str());
+}
+
+/** Push C function on top of stack.
+ * @param function C function to push
+ */
+void
+LuaContext::push_cfunction(lua_CFunction function)
+{
+#ifndef USE_ROS
+  MutexLocker lock(__lua_mutex);
+#endif
+  lua_pushcfunction(__L, function);
 }
 
 
@@ -1080,6 +1147,7 @@ LuaContext::remove_global(const char *name)
   __booleans.erase(name);
   __numbers.erase(name);
   __integers.erase(name);
+  __cfunctions.erase(name);
 
   lua_pushnil(__L);
   lua_setglobal(__L, name);
