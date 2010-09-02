@@ -36,6 +36,6 @@ link_libraries(${LUA_LIBRARIES} tolua++5.1)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_library(${PROJECT_NAME} src/fam.cpp src/context.cpp src/exceptions.cpp)
+rosbuild_add_library(${PROJECT_NAME} src/fam.cpp src/context.cpp src/exceptions.cpp src/context_watcher.cpp)
 set(${PROJECT_NAME}_CFLAGS_OTHER -DUSE_ROS)
 

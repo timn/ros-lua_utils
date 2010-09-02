@@ -22,6 +22,7 @@
 
 #ifdef USE_ROS
 #  include <lua_utils/context.h>
+#  include <lua_utils/context_watcher.h>
 #else
 #  include <lua/context.h>
 #  include <lua/context_watcher.h>
@@ -119,8 +120,29 @@ LuaContext::~LuaContext()
   delete __fam;
   if ( __start_script )  free(__start_script);
   if ( __owns_L) {
+#ifndef USE_ROS
+    MutexLocker(__watchers.mutex());
+    LockList<LuaContextWatcher *>::iterator i;
+#else
+    std::list<LuaContextWatcher *>::iterator i;
+#endif
+    for (i = __watchers.begin(); i != __watchers.end(); ++i) {
+      try {
+	(*i)->lua_finalize(this);
+      } catch (Exception &e) {
+#ifndef USE_ROS
+	LibLogger::log_warn("LuaContext", "Context watcher threw an exception on finalize, "
+			    "exception follows");
+	LibLogger::log_warn("LuaContext", e);
+#endif
+      }
+    }
+
     lua_close(__L);
   }
+#ifndef USE_ROS
+  delete __lua_mutex;
+#endif
 }
 
 
@@ -184,13 +206,16 @@ LuaContext::init_state()
     lua_setglobal(L, __cfunctions_it->first.c_str());
   }
 
-#ifndef USE_ROS
   LuaContext *tmpctx = new LuaContext(L);
+#ifndef USE_ROS
   MutexLocker(__watchers.mutex());
   LockList<LuaContextWatcher *>::iterator i;
+#else
+  std::list<LuaContextWatcher *>::iterator i;
+#endif
   for (i = __watchers.begin(); i != __watchers.end(); ++i) {
     try {
-      (*i)->lua_restarted(tmpctx);
+      (*i)->lua_init(tmpctx);
     } catch (...) {
       delete tmpctx;
       lua_close(L);
@@ -198,7 +223,6 @@ LuaContext::init_state()
     }
   }
   delete tmpctx;
-#endif
 
   if ( __start_script ) {
     if (access(__start_script, R_OK) == 0) {
@@ -255,8 +279,40 @@ LuaContext::restart()
   try {
     lua_State *L = init_state();
     lua_State *tL = __L;
+
+#ifndef USE_ROS
+    MutexLocker(__watchers.mutex());
+    LockList<LuaContextWatcher *>::iterator i;
+#else
+    std::list<LuaContextWatcher *>::iterator i;
+#endif
+    for (i = __watchers.begin(); i != __watchers.end(); ++i) {
+      try {
+	(*i)->lua_finalize(this);
+      } catch (Exception &e) {
+#ifndef USE_ROS
+	LibLogger::log_warn("LuaContext", "Context watcher threw an exception on finalize, "
+			    "exception follows");
+	LibLogger::log_warn("LuaContext", e);
+#endif
+      }
+    }
+
+    // swap and destroy old context
     __L = L;
     lua_close(tL);
+
+    for (i = __watchers.begin(); i != __watchers.end(); ++i) {
+      try {
+	(*i)->lua_restarted(this);
+      } catch (Exception &e) {
+#ifndef USE_ROS
+	LibLogger::log_warn("LuaContext", "Context watcher threw an exception on restart, "
+			    "exception follows");
+	LibLogger::log_warn("LuaContext", e);
+#endif
+      }
+    }
 
   } catch (Exception &e) {
 #ifndef USE_ROS
@@ -1320,14 +1376,17 @@ LuaContext::setfenv(int idx)
 }
 
 
-#ifndef USE_ROS
 /** Add a context watcher.
  * @param watcher watcher to add
  */
 void
 LuaContext::add_watcher(fawkes::LuaContextWatcher *watcher)
 {
+#ifndef USE_ROS
   __watchers.push_back_locked(watcher);
+#else
+  __watchers.push_back(watcher);
+#endif
 }
 
 
@@ -1337,9 +1396,12 @@ LuaContext::add_watcher(fawkes::LuaContextWatcher *watcher)
 void
 LuaContext::remove_watcher(fawkes::LuaContextWatcher *watcher)
 {
+#ifndef USE_ROS
   __watchers.remove_locked(watcher);
-}
+#else
+  __watchers.remove(watcher);
 #endif
+}
 
 
 /** Process FAM events. */

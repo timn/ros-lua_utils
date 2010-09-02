@@ -44,8 +44,8 @@ namespace fawkes {
 }
 #endif
 
-#ifndef USE_ROS
 class LuaContextWatcher;
+#ifndef USE_ROS
 class Mutex;
 #endif
 
@@ -139,10 +139,8 @@ class LuaContext : public FamListener
   size_t       objlen(int idx);
   void         setfenv(int idx = -2);
 
-#ifndef USE_ROS
   void         add_watcher(LuaContextWatcher *watcher);
   void         remove_watcher(LuaContextWatcher *watcher);
-#endif
 
   /* from FamListener */
   virtual void fam_event(const char *filename, unsigned int mask);
@@ -187,6 +185,8 @@ class LuaContext : public FamListener
 
 #ifndef USE_ROS
   LockList<LuaContextWatcher *> __watchers;
+#else
+  std::list<LuaContextWatcher *> __watchers;
 #endif
 
 };
