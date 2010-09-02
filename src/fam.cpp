@@ -33,6 +33,7 @@
 #endif
 #include <cerrno>
 #include <cstdlib>
+#include <cstdio>
 
 using ros::Exception;
 
@@ -285,9 +286,14 @@ FileAlterationMonitor::process_events(int timeout)
   int prv = poll(ipfd, 2, timeout);
   if ( prv == -1 ) {
     if ( errno != EINTR ) {
-      //LibLogger::log_error("FileAlterationMonitor",
-      //		   "inotify poll failed: %s (%i)",
-      //		   strerror(errno), errno);
+#ifndef USE_ROS
+      LibLogger::log_error("FileAlterationMonitor",
+			   "inotify poll failed: %s (%i)",
+			   strerror(errno), errno);
+#else
+      printf("FileAlterationMonitor: inotify poll failed: %s (%i)\n",
+	     strerror(errno), errno);
+#endif
     } else {
       __interrupted = true;
     }
@@ -304,11 +310,11 @@ FileAlterationMonitor::process_events(int timeout)
       if ((bytes = read(__inotify_fd, __inotify_buf, __inotify_bufsize)) != -1) {
 	while (!__interrupted && (i < bytes)) {
 	  struct inotify_event *event = (struct inotify_event *) &__inotify_buf[i];
-	  
+
 	  bool valid = true;
 	  if (! (event->mask & IN_ISDIR)) {
 	    for (__rxit = __regexes.begin(); __rxit != __regexes.end(); ++__rxit) {
-	      if (regexec(*__rxit, event->name, 0, NULL, 0) == REG_NOMATCH ) {
+	      if (event->len > 0 && regexec(*__rxit, event->name, 0, NULL, 0) == REG_NOMATCH ) {
 		//LibLogger::log_debug("FileAlterationMonitor", "A regex did not match for %s", event->name);
 		valid = false;
 		break;
@@ -318,22 +324,22 @@ FileAlterationMonitor::process_events(int timeout)
 
 	  /*
 	  if (event->mask & IN_MODIFY) {
-	    LibLogger::log_debug("FileAlterationMonitor", "%s has been modified", event->name);
-	    }
+	    printf("FileAlterationMonitor: %s has been modified\n", event->len > 0 ? event->name : "?");
+	  }
 	  if (event->mask & IN_MOVE) {
-	    LibLogger::log_debug("FileAlterationMonitor", "%s has been moved", event->name);
-	    }
+	    printf("FileAlterationMonitor: %s has been moved\n", event->len > 0 ? event->name : "?");
+	  }
 	  if (event->mask & IN_DELETE) {
-	    LibLogger::log_debug("FileAlterationMonitor", "%s has been deleted", event->name);
+	    printf("FileAlterationMonitor: %s has been deleted\n", event->len > 0 ? event->name : "?");
 	  }
 	  if (event->mask & IN_CREATE) {
-	    LibLogger::log_debug("FileAlterationMonitor", "%s has been created", event->name);
+	    printf("FileAlterationMonitor: %s has been created\n", event->len > 0 ? event->name : "?");
 	  }
 	  */
 
 	  if ( valid ) {
 	    for (__lit = __listeners.begin(); __lit != __listeners.end(); ++__lit) {
-	      (*__lit)->fam_event(event->name, event->mask);
+	      (*__lit)->fam_event(event->len > 0 ? event->name : "?", event->mask);
 	    }
 	  }
 
@@ -343,7 +349,7 @@ FileAlterationMonitor::process_events(int timeout)
 	    inotify_rm_watch(__inotify_fd, event->wd);
 	  }
 
-	  if (event->mask & IN_CREATE) {
+	  if (event->mask & IN_CREATE && event->len > 0) {
 	    // Check if it is a directory, if it is, watch it
 	    std::string fp = __inotify_watches[event->wd] + "/" + event->name;
 	    if (  (event->mask & IN_ISDIR) && (event->name[0] != '.') ) {
