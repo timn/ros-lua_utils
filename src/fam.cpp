@@ -3,8 +3,9 @@
  *  fam.h - File Alteration Monitor
  *
  *  Created: Fri May 23 11:38:41 2008
- *  Copyright  2006-2008  Tim Niemueller [www.niemueller.de]
- *
+ *  Copyright  2006-2010  Tim Niemueller [www.niemueller.de]
+ *             2010       Carnegie Mellon University
+ *             2010       Intel Labs Pittsburgh
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify

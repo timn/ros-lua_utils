@@ -3,8 +3,9 @@
  *  context_watcher.cpp - Fawkes Lua Context Watcher
  *
  *  Created: Thu Jan 01 15:18:14 2009
- *  Copyright  2006-2009  Tim Niemueller [www.niemueller.de]
- *
+ *  Copyright  2006-2010  Tim Niemueller [www.niemueller.de]
+ *             2010       Carnegie Mellon University
+ *             2010       Intel Labs Pittsburgh
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify

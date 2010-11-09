@@ -3,8 +3,9 @@
  *  context.h - Fawkes Lua Context
  *
  *  Created: Fri May 23 11:29:01 2008
- *  Copyright  2006-2009  Tim Niemueller [www.niemueller.de]
- *
+ *  Copyright  2006-2010  Tim Niemueller [www.niemueller.de]
+ *             2010       Carnegie Mellon University
+ *             2010       Intel Labs Pittsburgh
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
