@@ -1,0 +1,18 @@
+
+lua_utils: Utility classes for Lua in C++
+=========================================
+
+This package provides utility classes to interact with a Lua interpreter from
+C++. They taken from the Fawkes source tree. The goal of this package is to
+allow for a free flow of this code between Fawkes and ROS without the need
+for platform-specific changes on code transfer (though there are specific
+regions in the code guarded with macros). Keep this in mind when changing
+these files.
+
+Requirements
+------------
+The following system packages are required to compile and use this packaeg:
+
+- Lua 5.1.4		http://www.lua.org
+- tolua++ 1.0.93	http://www.codenix.com/~tolua/
+
