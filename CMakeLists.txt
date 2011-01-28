@@ -18,10 +18,35 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 add_definitions(-DUSE_ROS -DHAVE_INOTIFY)
-pkg_check_modules(LUA REQUIRED lua5.1)
+pkg_check_modules(LUA_DEB lua5.1)
+pkg_check_modules(LUA_FED lua)
 
-include_directories(${LUA_INCLUDE_DIRS})
-link_libraries(${LUA_LIBRARIES} tolua++5.1)
+if(LUA_DEB_FOUND)
+  include_directories(${LUA_DEB_INCLUDE_DIRS})
+  link_libraries(${LUA_DEB_LIBRARIES})
+elseif(LUA_FED_FOUND)
+  include_directories(${LUA_FED_INCLUDE_DIRS})
+  link_libraries(${LUA_FED_LIBRARIES})
+else()
+  message(FATAL_ERROR "Lua not found on system.")
+endif()
+
+
+message("-- checking for tolua++")
+find_library(TOLUA_DEB tolua++5.1)
+find_library(TOLUA_FED tolua++)
+
+if(TOLUA_DEB)
+  message("--   Debian style tolua++ found")
+  link_libraries(${TOLUA_DEB})
+elseif(TOLUA_FED)
+  message("--   Fedora style tolua++ found")
+  link_libraries(${TOLUA_FED})
+else()
+  message(FATAL_ERROR "tolua++ not found on system.")
+endif()
+
+
 
 #uncomment if you have defined messages
 #rosbuild_genmsg()

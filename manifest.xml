@@ -8,7 +8,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/lua_utils</url>
   <export>
-    <cpp cflags="-I${prefix}/include -DUSE_ROS -DHAVE_INOTIFY `pkg-config --cflags lua5.1`" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -llua_utils"/>
+    <cpp cflags="-I${prefix}/include -DUSE_ROS -DHAVE_INOTIFY `pkg-config --exists lua5.1 &amp;&amp; pkg-config --cflags lua5.1 || pkg-config --cflags lua`" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -llua_utils `pkg-config --exists lua5.1 &amp;&amp; pkg-config --libs lua5.1 || pkg-config --libs lua`"/>
   </export>
   <depend package="roscpp"/>
   <depend package="roslib"/>
