@@ -22,7 +22,18 @@
  */
 
 #include <lua_utils/fam.h>
-#include <ros/exception.h>
+
+#ifndef USE_ROS
+#  include <core/exception.h>
+#else
+#  include <ros/common.h>
+#  if ROS_VERSION_MAJOR > 1 || ROS_VERSION_MAJOR == 1 && ROS_VERSION_MINOR >= 2
+#    include <ros/exception.h>
+#  else
+#    include <ros/exceptions.h>
+#  endif
+using ros::Exception;
+#endif
 
 #ifdef HAVE_INOTIFY
 #  include <sys/inotify.h>
@@ -35,8 +46,6 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstdio>
-
-using ros::Exception;
 
 namespace fawkes {
 
